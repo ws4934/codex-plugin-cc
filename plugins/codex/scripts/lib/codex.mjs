@@ -65,7 +65,7 @@ function buildThreadParams(cwd, options = {}) {
     cwd,
     model: options.model ?? null,
     approvalPolicy: options.approvalPolicy ?? "never",
-    sandbox: options.sandbox ?? "read-only",
+    sandbox: options.sandbox,
     serviceName: SERVICE_NAME,
     ephemeral: options.ephemeral ?? true
   };
@@ -78,7 +78,7 @@ function buildResumeParams(threadId, cwd, options = {}) {
     cwd,
     model: options.model ?? null,
     approvalPolicy: options.approvalPolicy ?? "never",
-    sandbox: options.sandbox ?? "read-only"
+    sandbox: options.sandbox
   };
 }
 
@@ -1138,6 +1138,8 @@ export async function runAppServerTurn(cwd, options = {}) {
           input: buildTurnInput(prompt),
           model: options.model ?? null,
           effort: options.effort ?? null,
+          // A loaded thread can retain its previous sandbox on resume.
+          sandboxPolicy: options.sandbox === "read-only" ? { type: "readOnly" } : undefined,
           outputSchema: options.outputSchema ?? null
         }),
       { onProgress: options.onProgress }

@@ -179,6 +179,16 @@ Ask Codex to redesign the database connection to be more resilient.
 - if you say `spark`, the plugin maps that to `gpt-5.3-codex-spark`
 - follow-up rescue requests can continue the latest Codex task in the repo
 
+Write-capable rescue tasks (`task --write`) use Codex's configured sandbox instead of forcing `workspace-write`. For example, to allow full access in a trusted project, set this in the project's `.codex/config.toml`:
+
+```toml
+sandbox_mode = "danger-full-access"
+```
+
+This permits writes outside the workspace and network access. Codex only loads project configuration for trusted projects; see the [configuration precedence](https://developers.openai.com/codex/config-basic). The plugin keeps approvals non-interactive (`never`). Read-only tasks and reviews still explicitly use a read-only sandbox.
+
+After changing sandbox configuration, use `/codex:rescue --fresh ...` to start a new thread. An already loaded thread can retain its previous sandbox when resumed, even after reloading the plugin.
+
 ### `/codex:transfer`
 
 Creates a persistent Codex thread from the current Claude Code session and prints a `codex resume <session-id>` command.

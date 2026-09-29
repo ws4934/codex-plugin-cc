@@ -698,6 +698,43 @@ test("session start hook exports the Claude session id, transcript path, and plu
   );
 });
 
+for (const write of [true, false]) {
+  test(`task sandbox ${write ? "omits overrides" : "enforces read-only"} on start and resume`, () => {
+    const repo = makeTempDir();
+    const binDir = makeTempDir();
+    const statePath = path.join(binDir, "fake-codex-state.json");
+    installFakeCodex(binDir);
+    initGitRepo(repo);
+    const env = buildEnv(binDir);
+
+    try {
+      for (const resume of [false, true]) {
+        const flags = [...(write ? ["--write"] : []), ...(resume ? ["--resume"] : [])];
+        const result = run("node", [SCRIPT, "task", ...flags, "check sandbox routing"], { cwd: repo, env });
+        assert.equal(result.status, 0, result.stderr);
+        const state = JSON.parse(fs.readFileSync(statePath, "utf8"));
+        const params = resume ? state.lastThreadResume : state.lastThreadStart;
+        assert.equal(params.cwd, fs.realpathSync(repo));
+        assert.equal(params.approvalPolicy, "never");
+        if (write) {
+          assert.equal(Object.hasOwn(params, "sandbox"), false);
+          assert.equal(Object.hasOwn(state.lastTurnStart, "sandboxPolicy"), false);
+        } else {
+          assert.equal(params.sandbox, "read-only");
+          assert.deepEqual(state.lastTurnStart.sandboxPolicy, { type: "readOnly" });
+        }
+      }
+    } finally {
+      const cleanup = run("node", [SESSION_HOOK, "SessionEnd"], {
+        cwd: repo,
+        env,
+        input: JSON.stringify({ hook_event_name: "SessionEnd", cwd: repo })
+      });
+      assert.equal(cleanup.status, 0, cleanup.stderr);
+    }
+  });
+}
+
 test("write task output focuses on the Codex result without generic follow-up hints", () => {
   const repo = makeTempDir();
   const binDir = makeTempDir();
@@ -2149,6 +2186,8 @@ test("commands lazily start and reuse one shared app-server after first use", as
 
   const fakeState = JSON.parse(fs.readFileSync(fakeStatePath, "utf8"));
   assert.equal(fakeState.appServerStarts, 1);
+  assert.equal(fakeState.lastThreadStart.sandbox, "read-only");
+  assert.deepEqual(fakeState.lastTurnStart.sandboxPolicy, { type: "readOnly" });
 
   const cleanup = run("node", [SESSION_HOOK, "SessionEnd"], {
     cwd: repo,
