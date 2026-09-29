@@ -1,5 +1,7 @@
 # Codex plugin for Claude Code
 
+This is [ws4934's fork](https://github.com/ws4934/codex-plugin-cc) of the [official OpenAI plugin](https://github.com/openai/codex-plugin-cc). The Claude forwarding subagent is configured with `effort: high`.
+
 Use Codex from inside Claude Code for code reviews or to delegate tasks to Codex.
 
 This plugin is for Claude Code users who want an easy way to start using Codex from the workflow
@@ -21,17 +23,19 @@ they already have.
 
 ## Install
 
-Add the marketplace in Claude Code:
+Add this fork's marketplace in Claude Code:
 
 ```bash
-/plugin marketplace add openai/codex-plugin-cc
+/plugin marketplace add ws4934/codex-plugin-cc
 ```
 
 Install the plugin:
 
 ```bash
-/plugin install codex@openai-codex
+/plugin install codex@ws4934-codex
 ```
+
+If you already have the official `codex@openai-codex` plugin installed, disable it in `/plugin` → Installed before enabling this fork. Both use the same `/codex:*` command names.
 
 Reload plugins:
 
@@ -73,6 +77,17 @@ One simple first run is:
 ```
 
 ## Usage
+
+### Update this fork
+
+Run these commands in your terminal:
+
+```bash
+claude plugin marketplace update ws4934-codex
+claude plugin update codex@ws4934-codex
+```
+
+Then run `/reload-plugins` in Claude Code to load the updated plugin. See the [Claude Code plugin management docs](https://code.claude.com/docs/en/discover-plugins#keep-plugins-updated) for details.
 
 ### `/codex:review`
 
@@ -126,6 +141,8 @@ This command is read-only. It does not fix code.
 ### `/codex:rescue`
 
 Hands a task to Codex through the `codex:codex-rescue` subagent.
+
+The Claude forwarding subagent uses `effort: high`. This is independent of `--effort`, which controls Codex's reasoning effort.
 
 Use it when you want Codex to:
 
